@@ -7,29 +7,19 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <errno.h>
-#include <sys/stat.h>
 #include <fcntl.h>
-#include <sys/sendfile.h>
-
+#include <strings.h>
 
 int main(int argc,char* argv[])
 {
-	if(argc <= 3)
+	if(argc <= 2)
 	{
-		printf("usage:%s <ip_address> <port_number> <filename> \n",argv[0]);
+		printf("usage:%s <ip_address> <port_number> \n",argv[0]);
 		return 1;
 	}
 	
 	const char* ip = argv[1];
 	int port = atoi(argv[2]);
-	const char* file_name = argv[3];
-	
-	
-	int filefd = open(file_name,O_RDONLY);
-	assert(filefd > 0);
-	
-	struct stat stat_buf;
-	fstat(filefd,&stat_buf);
 	
 	struct sockaddr_in address;
 	bzero(&address,sizeof(address));
@@ -55,10 +45,31 @@ int main(int argc,char* argv[])
 	}	
 	else
 	{
-		sendfile(connfd,filefd,NULL,stat_buf.st_size);
+		int pipefd[2];
+		assert(ret != -1);
+		ret = pipe(pipefd);
+		ret = splice(connfd,NULL,pipefd[1],NULL,32768,SPLICE_F_MORE | SPLICE_F_MOVE);
+		assert(ret != -1);
+		
+		ret = splice(pipefd[0],NULL,connfd,NULL,32768,SPLICE_F_MORE | SPLICE_F_MOVE);
+		assert(ret != -1);
+		
 		close(connfd);
 	}
 	
 	close(sock);
 	return 0;
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
