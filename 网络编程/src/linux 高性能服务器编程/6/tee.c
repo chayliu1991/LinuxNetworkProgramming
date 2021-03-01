@@ -1,3 +1,5 @@
+#define _GNU_SOURCE (1)
+
 #include <assert.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -29,14 +31,14 @@ int main(int argc,char* argv[])
 	ret = splice(STDIN_FILENO,NULL,pipefd_stdout[1],NULL,32768,SPLICE_F_MORE | SPLICE_F_MOVE);
 	assert(ret != -1);
 	
-	ret = tee(pipefd_stdout[0],NULL,pipefd_file[1],NULL,32768,SPLICE_F_MORE | SPLICE_F_MOVE);
-	assert(ret != -1
+	ret = tee(pipefd_stdout[0],pipefd_file[1],32768,SPLICE_F_MORE | SPLICE_F_MOVE);
+	assert(ret != -1);
 	
 	ret = splice(pipefd_file[0],NULL,filefd,NULL,32768,SPLICE_F_MORE | SPLICE_F_MOVE);
-	assert(ret != -1
+	assert(ret != -1);
 	
 	ret = splice(pipefd_stdout[0],NULL,STDOUT_FILENO,NULL,32768,SPLICE_F_MORE | SPLICE_F_MOVE);
-	assert(ret != -1
+	assert(ret != -1);
 	
 	close(filefd);
 	close(pipefd_stdout[0]);
