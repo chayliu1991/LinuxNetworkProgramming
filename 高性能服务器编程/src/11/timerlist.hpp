@@ -17,7 +17,7 @@ struct client_data
     int sockfd;
     char buf[BUFFER_SIZE];
     util_timer* timer;
-}
+};
 
 class util_timer
 {
@@ -25,13 +25,13 @@ public:
     util_timer():prev(NULL),next(NULL){}
 
 public:
-    time_t expire; //@ ÈÎÎñ³¬Ê±Ê±¼ä£¬ÕâÀïÊ¹ÓÃµÄÊÇ¾ø¶ÔÊ±¼ä
-    void (*cb_func)(client_data*);  //@ ÈÎÎñ»Øµ÷º¯Êý
+    time_t expire; //@ ï¿½ï¿½ï¿½ï¿½Ê±Ê±ï¿½ä£¬ï¿½ï¿½ï¿½ï¿½Ê¹ï¿½Ãµï¿½ï¿½Ç¾ï¿½ï¿½ï¿½Ê±ï¿½ï¿½
+    void (*cb_func)(client_data*);  //@ ï¿½ï¿½ï¿½ï¿½Øµï¿½ï¿½ï¿½ï¿½ï¿½
 
-    //@ »Øµ÷º¯Êý´¦ÀíµÄ¿Í»§Êý¾Ý£¬ÓÉ¶¨Ê±Æ÷µÄÖ´ÐÐÕß´«µÝ¸ø»Øµ÷º¯Êý
+    //@ ï¿½Øµï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ä¿Í»ï¿½ï¿½ï¿½ï¿½Ý£ï¿½ï¿½É¶ï¿½Ê±ï¿½ï¿½ï¿½ï¿½Ö´ï¿½ï¿½ï¿½ß´ï¿½ï¿½Ý¸ï¿½ï¿½Øµï¿½ï¿½ï¿½ï¿½ï¿½
     client_data* user_data;
-    util_timer* prev;  //@ Ö¸ÏòÇ°Ò»¸ö¶¨Ê±Æ÷
-    util_timer* next;  //@ Ö¸ÏòÏÂÒ»¸ö¶¨Ê±Æ÷
+    util_timer* prev;  //@ Ö¸ï¿½ï¿½Ç°Ò»ï¿½ï¿½ï¿½ï¿½Ê±ï¿½ï¿½
+    util_timer* next;  //@ Ö¸ï¿½ï¿½ï¿½ï¿½Ò»ï¿½ï¿½ï¿½ï¿½Ê±ï¿½ï¿½
 };
 
 class sort_timer_lst
@@ -83,7 +83,7 @@ public:
         {
             head = head->next;
             head->prev = NULL;
-            timer->next = NULL; //@ ÇÐ¶ÏÖ®Ç°µÄÁ¬½Ó
+            timer->next = NULL; //@ ï¿½Ð¶ï¿½Ö®Ç°ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
             add_timer(timer,head);
         }
         else
@@ -103,7 +103,7 @@ public:
         {
             delete timer;
             head = NULL;
-            tail = NELL;
+            tail = NULL;
             return;
         }
 
@@ -133,14 +133,14 @@ public:
         if(!head)
             return;
         printf("timer tick\n");
-        timer_t cur = time(NULL);
+        time_t cur = time(NULL);
         util_timer* tmp = head;
         while(tmp)
         {
             if(cur < tmp->expire)
                 break;
-            //@ ÈÎÎñÖ´ÐÐÍê³Éºó£¬½«Æä´ÓÁ´±íÖÐÉ¾³ý
-            tmp->cb_func(timer->user_data);
+            //@ ï¿½ï¿½ï¿½ï¿½Ö´ï¿½ï¿½ï¿½ï¿½Éºó£¬½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½É¾ï¿½ï¿½
+            tmp->cb_func(tmp->user_data);
             head = tmp->next;
             if(head)
                 head->prev = NULL;
@@ -176,6 +176,11 @@ private:
             tail = timer;
         }
     }
+
+
+private:
+    util_timer* head;
+    util_timer* tail;
 };
 
 #endif //@ TIMERLIST_H

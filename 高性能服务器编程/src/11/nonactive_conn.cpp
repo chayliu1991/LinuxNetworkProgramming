@@ -6,10 +6,13 @@
 #include <errno.h>
 #include <signal.h>
 #include <string.h>
+#include <assert.h>
+#include <sys/epoll.h>
+
 #include "timerlist.hpp"
 
 #define FD_LIMIT (65535)
-#deifne MAX_EVENT_NUMER(1024)
+#define MAX_EVENT_NUMBER (1024)
 #define TIMESLOT (5)
 
 static int pipefd[2];
@@ -37,7 +40,7 @@ void sig_hander(int sig)
 {
     int save_errno = errno;
     int msg = sig;
-    send(piped[1], (char *), msg, 1, 0);
+    send(pipefd[1], (char *)&msg, 1, 0);
     errno = save_errno;
 }
 
@@ -46,16 +49,16 @@ void addsig(int sig)
     struct sigaction sa;
     memset(&sa, '\0', sizeof(sa));
     sa.sa_handler = sig_hander;
-    sa.flags |= SA_RESTART;
-    sigfill(&sa.sa_mask);
+    sa.sa_flags |= SA_RESTART;
+    sigfillset(&sa.sa_mask);
     assert(sigaction(sig, &sa, NULL) != -1);
 }
 
 void timer_handler()
 {
-    time_lst.tick();
+    timer_lst.tick();
 
-    //@ ÖØÐÂ¶¨Ê±£¬ÒÔ²»¶ÏµÄ´¥·¢ SIGALRM
+    //@ ï¿½ï¿½ï¿½Â¶ï¿½Ê±ï¿½ï¿½ï¿½Ô²ï¿½ï¿½ÏµÄ´ï¿½ï¿½ï¿½ SIGALRM
     alarm(TIMESLOT);
 }
 
@@ -93,7 +96,7 @@ int main(int argc, char *argv[])
     ret = listen(listenfd, 5);
     assert(ret != -1);
 
-    epoll_event events[MAX_EVENT_NUMER];
+    epoll_event events[MAX_EVENT_NUMBER];
     int epollfd = epoll_create(5);
     assert(epollfd != -1);
     addfd(epollfd, listenfd);
@@ -103,18 +106,18 @@ int main(int argc, char *argv[])
     setnonblocking(pipefd[0]);
     setnonblocking(pipefd[1]);
 
-    addsig(SIGARARM);
+    addsig(SIGALRM);
     addsig(SIGTERM);
 
     bool stop_server = false;
 
     client_data *users = new client_data[FD_LIMIT];
     bool timeout = false;
-    alarm(TIMESLOT); //@ ¶¨Ê±
+    alarm(TIMESLOT); //@ ï¿½ï¿½Ê±
 
     while (!stop_server)
     {
-        int number = epoll_wait(epollfd, events, MAX_EVENT_NUMER, -1);
+        int number = epoll_wait(epollfd, events, MAX_EVENT_NUMBER, -1);
         if ((number < 0) && (errno != EINTR))
         {
             printf("epoll error\n");
@@ -141,7 +144,7 @@ int main(int argc, char *argv[])
                 users[connfd].timer = timer;
                 timer_lst.add_timer(timer);
             }
-            else if ((sockfd == pipefd[0]) && (events[i].event & EPOLLIN))
+            else if ((sockfd == pipefd[0]) && (events[i].events & EPOLLIN))
             {
                 int sig;
                 char signals[1024];
@@ -169,7 +172,7 @@ int main(int argc, char *argv[])
                     }
                 }
             }
-            else if (events[i].event & EPOLLIN)
+            else if (events[i].events & EPOLLIN)
             {
                 memset(users[sockfd].buf, '\0', BUFFER_SIZE);
                 ret = recv(sockfd, users[sockfd].buf, BUFFER_SIZE - 1, 0);
@@ -200,10 +203,10 @@ int main(int argc, char *argv[])
                         timer_lst.adjust_timer(timer);
                     }
                 }
-                else
-                {
-                    printf("something else happened\n");
-                }
+            }
+            else
+            {
+                printf("something else happened\n");
             }
         }
         if (timeout)
